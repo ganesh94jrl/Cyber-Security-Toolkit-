@@ -1,0 +1,231 @@
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from scapy.all import sniff
+import socket
+
+# -------------------------------
+# 1. Vulnerability Scanner
+# -------------------------------
+
+def vulnerability_scanner():
+
+    url = input("Enter website URL: ")
+
+    sql_payload = "' OR '1'='1"
+    xss_payload = "<script>alert('XSS')</script>"
+
+    print("\nScanning for Vulnerabilities...\n")
+
+    try:
+        r = requests.get(url + sql_payload)
+
+        if "sql" in r.text.lower() or "error" in r.text.lower():
+            print("[SQL Injection Possible]", url)
+
+    except:
+        print("Error testing SQL injection")
+
+    try:
+        r = requests.get(url + xss_payload)
+
+        if xss_payload in r.text:
+            print("[XSS Vulnerable]", url)
+
+    except:
+        print("Error testing XSS")
+
+
+
+# -------------------------------
+# 2. Link Crawler
+# -------------------------------
+
+def link_crawler():
+
+    url = input("Enter website URL: ")
+
+    print("\nCrawling links...\n")
+
+    try:
+        r = requests.get(url)
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        links = set()
+
+        for link in soup.find_all("a"):
+
+            href = link.get("href")
+
+            if href:
+                full_link = urljoin(url, href)
+                links.add(full_link)
+
+        print("Links discovered:", len(links))
+
+        for link in links:
+            print(link)
+
+    except:
+        print("Error crawling website")
+
+
+
+# -------------------------------
+# 3. Packet Sniffer
+# -------------------------------
+
+def packet_callback(packet):
+
+    if packet.haslayer("IP"):
+
+        ip_layer = packet["IP"]
+
+        src = ip_layer.src
+        dst = ip_layer.dst
+
+        print(f"Packet: {src} -> {dst}")
+
+
+def packet_sniffer():
+
+    print("\nStarting Packet Sniffer...\n")
+
+    sniff(prn=packet_callback, count=20)
+
+
+
+# -------------------------------
+# 4. Directory Scanner
+# -------------------------------
+
+def directory_scanner():
+
+    url = input("Enter website URL: ")
+
+    directories = [
+        "admin",
+        "login",
+        "dashboard",
+        "backup",
+        "uploads",
+        "config"
+    ]
+
+    print("\nScanning Directories...\n")
+
+    for directory in directories:
+
+        target = urljoin(url, directory)
+
+        try:
+
+            r = requests.get(target)
+
+            if r.status_code == 200:
+                print("[FOUND]", target)
+
+        except:
+            pass
+
+
+
+# -------------------------------
+# 5. Simple Network Info
+# -------------------------------
+
+def network_info():
+
+    host = socket.gethostname()
+    ip = socket.gethostbyname(host)
+
+    print("\nSystem Network Information\n")
+    print("Hostname:", host)
+    print("Local IP:", ip)
+
+
+
+# -------------------------------
+# 6. Port Scanner
+# -------------------------------
+
+def port_scanner():
+
+    target = input("Enter target domain or IP: ")
+
+    print("\nScanning Ports...\n")
+
+    common_ports = {
+        21: "FTP",
+        22: "SSH",
+        23: "Telnet",
+        25: "SMTP",
+        53: "DNS",
+        80: "HTTP",
+        110: "POP3",
+        143: "IMAP",
+        443: "HTTPS",
+        3306: "MySQL",
+        8080: "HTTP-Alt"
+    }
+
+    for port in common_ports:
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        s.settimeout(1)
+
+        result = s.connect_ex((target, port))
+
+        if result == 0:
+            print(f"Open Port: {port} ({common_ports[port]})")
+
+        s.close()
+
+    print("\nScan Completed")
+
+
+
+# -------------------------------
+# Main Menu
+# -------------------------------
+
+while True:
+
+    print("\nCyber Security Toolkit\n")
+
+    print("1. Vulnerability Scanner")
+    print("2. Link Crawler")
+    print("3. Packet Sniffer")
+    print("4. Directory Scanner")
+    print("5. Network Information")
+    print("6. Port Scanner")
+    print("7. Exit")
+
+    choice = input("\nSelect option: ")
+
+    if choice == "1":
+        vulnerability_scanner()
+
+    elif choice == "2":
+        link_crawler()
+
+    elif choice == "3":
+        packet_sniffer()
+
+    elif choice == "4":
+        directory_scanner()
+
+    elif choice == "5":
+        network_info()
+
+    elif choice == "6":
+        port_scanner()
+
+    elif choice == "7":
+        print("Exiting Toolkit...")
+        break
+
+    else:
+        print("Invalid option")
